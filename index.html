@@ -1,0 +1,3051 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SharkTail — Система управления мойками</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --accent: #7c3aed;
+    --accent-2: #06b6d4;
+    --bg: linear-gradient(135deg,#f8fbff,#eef6ff);
+    --card: rgba(255,255,255,0.9);
+    --glass-border: rgba(124,58,237,0.12);
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --table-bg: #ffffff;
+    --table-border: #e2e8f0;
+    --glass-blur: 8px;
+    --sidebar-w: 96px;
+  }
+  body.dark{
+    --bg: linear-gradient(135deg,#071028,#0b1220);
+    --card: rgba(18,22,28,0.8);
+    --glass-border: rgba(124,58,237,0.14);
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --table-bg: rgba(30,41,59,0.8);
+    --table-border: rgba(71,85,105,0.4);
+  }
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: Inter, "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing:antialiased;
+    transition: background .3s, color .3s;
+    overflow: hidden;
+  }
+  
+  .auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--bg);
+    padding: 20px;
+  }
+
+  .auth-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(2,6,23,0.1);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .auth-logo {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg,var(--accent),var(--accent-2));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  .auth-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .auth-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .auth-form .form-control {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+
+  .auth-form .form-control:focus {
+    background: rgba(255,255,255,0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+  }
+
+  .auth-form .btn-primary {
+    background: linear-gradient(135deg,var(--accent),var(--accent-2));
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+    color: var(--text-muted);
+  }
+
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
+
+  .auth-divider span {
+    padding: 0 15px;
+    font-size: 14px;
+  }
+
+  .auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .auth-error {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #ef4444;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    display: none;
+  }
+
+  .auth-success {
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: #10b981;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    display: none;
+  }
+
+  
+  #app {
+    display: flex;
+    height: 100vh;
+    gap: 24px;
+    display: none; 
+  }
+  
+  aside.sidebar{
+    width:var(--sidebar-w);
+    min-width:var(--sidebar-w);
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border-right:1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:18px 10px;
+    gap:10px;
+    transition: width .28s ease;
+  }
+  aside.sidebar:hover{ width:260px; min-width:260px; }
+  .brand{
+    display:flex; align-items:center; gap:12px; width:100%;
+  }
+  .logo{
+    display:flex; align-items:center; justify-content:center;
+    width:48px; height:48px; border-radius:12px;
+    background: linear-gradient(135deg,var(--accent),var(--accent-2));
+    color:white; font-weight:700; box-shadow:0 6px 20px rgba(124,58,237,0.18);
+  }
+  .brand .title{ font-weight:700; opacity:0; transition: opacity .2s; color: var(--text); }
+  aside.sidebar:hover .brand .title{ opacity:1; }
+  nav.leftnav{ width:100%; display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+  nav.leftnav a{
+    display:flex; align-items:center; gap:12px; width:100%;
+    padding:10px 12px; border-radius:10px; color:var(--text-muted);
+    text-decoration:none; transition: all .18s ease;
+  }
+  nav.leftnav a i{ font-size:1.35rem; width:30px; text-align:center; color:inherit; }
+  aside.sidebar:hover nav.leftnav a span{ opacity:1; }
+  nav.leftnav a span{ opacity:0; transition: opacity .18s; white-space:nowrap; color: var(--text); }
+  nav.leftnav a.active{ background: linear-gradient(90deg, rgba(124,58,237,0.14), rgba(6,182,212,0.06)); color:var(--accent); box-shadow:0 8px 20px rgba(124,58,237,0.08); border-left:4px solid var(--accent); }
+  .create-btn{
+    margin: auto auto 20px auto;
+    width: 56px; 
+    height: 56px; 
+    border-radius: 999px;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    background: linear-gradient(135deg,var(--accent),#4f46e5);
+    color: white; 
+    box-shadow: 0 10px 30px rgba(79,70,229,0.2); 
+    border: none; 
+    cursor: pointer;
+    transition: all .18s;
+    position: relative;
+    overflow: hidden;
+  }
+  aside.sidebar:hover .create-btn{ 
+    width: calc(100% - 40px); 
+    border-radius: 12px; 
+    padding: 0 18px;
+  }
+  .create-btn span {
+    margin-left: 14px; 
+    font-weight: 700; 
+    opacity: 0;
+    transition: opacity .2s;
+    white-space: nowrap;
+  }
+  aside.sidebar:hover .create-btn span {
+    opacity: 1;
+  }
+  .create-btn i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: all .18s;
+  }
+  aside.sidebar:hover .create-btn i {
+    position: static;
+    transform: none;
+  }
+  main.right{
+    flex:1; height:100vh; display:flex; flex-direction:column; overflow:hidden;
+  }
+  header.topbar{
+    height:76px; display:flex; align-items:center; gap:16px; padding:12px 22px;
+    border-bottom:1px solid var(--glass-border); background:var(--card); backdrop-filter: blur(var(--glass-blur));
+  }
+  header .section-title{ font-weight:700; font-size:1.05rem; margin-right:12px; color: var(--text); }
+  .search-wrap{ flex:1; display:flex; justify-content:center; }
+  .search{
+    width:60%; min-width:240px; max-width:720px; display:flex; gap:8px; align-items:center;
+    background:var(--card); padding:8px 12px; border-radius:12px; border:1px solid var(--glass-border);
+  }
+  .search input{ border:none; outline:none; background:transparent; width:100%; color: var(--text); }
+  .search input::placeholder{ color: var(--text-muted); }
+  .top-actions{ display:flex; align-items:center; gap:12px; }
+  .top-actions .user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background .2s;
+  }
+  .top-actions .user-info:hover {
+    background: rgba(124,58,237,0.1);
+  }
+  .user-menu {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: var(--card);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 8px 0;
+    min-width: 200px;
+    box-shadow: 0 10px 40px rgba(2,6,23,0.1);
+    display: none;
+    z-index: 1000;
+  }
+  .user-menu.show {
+    display: block;
+  }
+  .user-menu-item {
+    padding: 10px 16px;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background .2s;
+    cursor: pointer;
+  }
+  .user-menu-item:hover {
+    background: rgba(124,58,237,0.1);
+  }
+  .user-menu-divider {
+    height: 1px;
+    background: var(--glass-border);
+    margin: 4px 0;
+  }
+  .content{
+    padding:20px; height: calc(100vh - 76px); overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .card{
+    background:var(--card); border-radius:14px; padding:16px; box-shadow: 0 6px 20px rgba(2,6,23,0.05);
+    transition: transform .18s ease, box-shadow .18s ease;
+    backdrop-filter: blur(var(--glass-blur));
+    border:1px solid var(--glass-border);
+    color: var(--text);
+  }
+  .card:hover{ transform: translateY(-6px); box-shadow:0 12px 40px rgba(2,6,23,0.08); }
+  .card.stat {
+    padding: 12px;
+    min-height: 80px;
+    position: relative;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100%;
+  }
+  .stat .meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+  }
+  .stat .value {
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .stat .label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .stat .muted {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .stat .muted span {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .stat-icon {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    opacity: 0.8;
+  }
+  .stat-icon i {
+    font-size: 1.6rem;
+  }
+  .chart-wrap{ height:280px; display:flex; align-items:center; }
+  table.table { 
+    margin-bottom:0; 
+    background:var(--table-bg);
+    border:1px solid var(--table-border);
+    border-radius:8px;
+    overflow:hidden;
+    color: var(--text) !important;
+  }
+  .table th{ 
+    background:var(--table-bg) !important; 
+    color:var(--text-muted) !important; 
+    font-weight:600; 
+    font-size:0.85rem;
+    padding:12px 16px;
+    border-bottom:1px solid var(--table-border) !important;
+  }
+  .table td{ 
+    padding:10px 16px;
+    border-bottom:1px solid var(--table-border) !important;
+    color: var(--text) !important;
+    font-size:0.9rem;
+    background:var(--table-bg) !important;
+  }
+  tbody tr{ 
+    transition: background .12s ease;
+    background:var(--table-bg) !important;
+  }
+  tbody tr:hover{ 
+    background: var(--card) !important; 
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  .badge-status { 
+    padding:4px 8px; 
+    border-radius:999px; 
+    font-weight:600; 
+    font-size:0.75rem;
+    display: inline-block;
+    min-width: 80px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .badge-status:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .modal-content{ 
+    border-radius:14px; 
+    background:var(--card); 
+    border:1px solid var(--glass-border); 
+    box-shadow:0 20px 60px rgba(2,6,23,0.1);
+    color: var(--text);
+  }
+  .modal-header{ border-bottom:none; }
+  .modal-body{ color: var(--text); }
+  .form-control, .form-select{
+    background:var(--card);
+    border:1px solid var(--glass-border);
+    color: var(--text);
+  }
+  .form-control::placeholder{ color: var(--text-muted); }
+  .toast-wrap{ position:fixed; right:22px; bottom:22px; z-index:2000; }
+  .muted{ color:var(--text-muted); font-size:0.85rem; }
+  .fadeup{ animation: fadeUp .45s cubic-bezier(.2,.9,.3,1); }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
+  .wash-bay-card {
+    transition: all 0.2s ease;
+  }
+  .wash-bay-card.available:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+  }
+  .wash-bay-card.busy {
+    background-color: var(--card);
+  }
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(14, 1fr);
+    gap: 1px;
+    font-size: 0.8rem;
+  }
+  .schedule-header, .schedule-row {
+    display: contents;
+  }
+  .time-slot {
+    padding: 4px;
+    border: 1px solid var(--table-border);
+    text-align: center;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bay-name {
+    padding: 4px;
+    border: 1px solid var(--table-border);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+  .free { background-color: rgba(16, 185, 129, 0.1); }
+  .status-pending { background-color: rgba(148, 163, 184, 0.3); }
+  .status-confirmed { background-color: rgba(59, 130, 246, 0.3); }
+  .status-arrived { background-color: rgba(245, 158, 11, 0.3); }
+  .status-inwash { background-color: rgba(124, 58, 237, 0.3); }
+  .status-completed { background-color: rgba(16, 185, 129, 0.3); }
+  .multiselect {
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .multiselect option {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--table-border);
+  }
+  .multiselect option:last-child {
+    border-bottom: none;
+  }
+  @media (max-width:900px){
+    aside.sidebar{ width:66px; min-width:66px; }
+    aside.sidebar:hover{ width:210px; min-width:210px; }
+    .search{ width:100%; max-width:unset; }
+    .grid{ 
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+  }
+  @media (max-width:480px){
+    .grid{
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+  }
+  .compact-table .table td{ padding:8px 12px; font-size:0.85rem; }
+  .compact-table .table th{ padding:10px 12px; font-size:0.8rem; }
+  .btn-sm{ padding:4px 8px; font-size:0.8rem; }
+</style>
+</head>
+<body>
+
+<div id="authContainer" class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo">🦈</div>
+      <h2 class="auth-title">SharkTail</h2>
+      <p class="auth-subtitle">Система управления автомойками</p>
+    </div>
+    
+    
+    <div id="loginForm" class="auth-form">
+      <div id="loginError" class="auth-error"></div>
+      <div id="loginSuccess" class="auth-success"></div>
+      
+      <input type="text" 
+             id="loginUsername" 
+             class="form-control" 
+             placeholder="Логин" 
+             autocomplete="username">
+      
+      <input type="password" 
+             id="loginPassword" 
+             class="form-control" 
+             placeholder="Пароль" 
+             autocomplete="current-password">
+      
+      <button id="loginBtn" class="btn btn-primary">
+        <i class="bi bi-box-arrow-in-right"></i> Войти
+      </button>
+      
+      <div class="auth-divider">
+        <span>Нет аккаунта?</span>
+      </div>
+      
+      <button id="showRegisterBtn" class="btn btn-outline-primary">
+        <i class="bi bi-person-plus"></i> Зарегистрироваться
+      </button>
+    </div>
+    
+    
+    <div id="registerForm" class="auth-form" style="display: none;">
+      <div id="registerError" class="auth-error"></div>
+      <div id="registerSuccess" class="auth-success"></div>
+      
+      <input type="text" 
+             id="registerName" 
+             class="form-control" 
+             placeholder="Ваше имя">
+      
+      <input type="text" 
+             id="registerUsername" 
+             class="form-control" 
+             placeholder="Логин"
+             autocomplete="username">
+      
+      <input type="password" 
+             id="registerPassword" 
+             class="form-control" 
+             placeholder="Пароль (минимум 6 символов)"
+             autocomplete="new-password">
+      
+      <input type="password" 
+             id="registerConfirmPassword" 
+             class="form-control" 
+             placeholder="Подтвердите пароль"
+             autocomplete="new-password">
+      
+      <button id="registerBtn" class="btn btn-primary">
+        <i class="bi bi-person-plus"></i> Зарегистрироваться
+      </button>
+      
+      <div class="auth-divider">
+        <span>Уже есть аккаунт?</span>
+      </div>
+      
+      <button id="showLoginBtn" class="btn btn-outline-primary">
+        <i class="bi bi-box-arrow-in-right"></i> Войти
+      </button>
+    </div>
+    
+    <div class="auth-footer">
+      <p>SharkTail © 2026</p>
+    </div>
+  </div>
+</div>
+
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">🦈</div>
+      <div class="title">SharkTail</div>
+    </div>
+    <nav class="leftnav" id="nav">
+      <a href="#" class="nav-link active" data-section="dashboard"><i class="bi bi-speedometer2"></i><span>Дашборд</span></a>
+      <a href="#" class="nav-link" data-section="clients"><i class="bi bi-people"></i><span>Клиенты</span></a>
+      <a href="#" class="nav-link" data-section="cars"><i class="bi bi-car-front"></i><span>Автомобили</span></a>
+      <a href="#" class="nav-link" data-section="services"><i class="bi bi-tools"></i><span>Услуги</span></a>
+      <a href="#" class="nav-link" data-section="employees"><i class="bi bi-person-badge"></i><span>Сотрудники</span></a>
+      <a href="#" class="nav-link" data-section="appointments"><i class="bi bi-calendar-check"></i><span>Записи</span></a>
+      <a href="#" class="nav-link" data-section="shifts"><i class="bi bi-clock"></i><span>Смены</span></a>
+      <a href="#" class="nav-link" data-section="carwashes"><i class="bi bi-building"></i><span>Мойки</span></a>
+      <a href="#" class="nav-link" data-section="washbays"><i class="bi bi-geo-alt"></i><span>Моечные места</span></a>
+      <a href="#" class="nav-link" data-section="load-dashboard"><i class="bi bi-calendar-week"></i><span>Загрузка моек</span></a>
+    </nav>
+    <button class="create-btn" id="openCreate">
+      <i class="bi bi-plus-lg"></i>
+      <span>Создать</span>
+    </button>
+  </aside>
+  
+  <main class="right">
+    <header class="topbar">
+      <div class="section-title">Дашборд</div>
+      <div class="search-wrap">
+        <div class="search" id="searchBox">
+          <i class="bi bi-search" style="color: var(--text-muted);"></i>
+          <input id="globalSearch" placeholder="Поиск: имя, номер, услуга..." autocomplete="off">
+          <div id="searchSuggestions" style="position:absolute; margin-top:44px; width:60%; max-width:720px; z-index:50;"></div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="btn btn-sm" id="themeToggle" title="Тема">🌙</button>
+        <button class="btn btn-sm position-relative" id="notifBtn" title="Уведомления"><i class="bi bi-bell" style="color: var(--text);"></i><span id="notifPing" style="position:absolute; right:2px; top:-2px; width:8px; height:8px; background:#ef4444; border-radius:999px; display:none;"></span></button>
+        
+        
+        <div class="user-info" id="userInfoBtn">
+          <img src="https://i.pravatar.cc/40" class="rounded-circle" alt="avatar">
+          <div>
+            <div id="userName">Администратор</div>
+            <div class="muted" id="userRole">Администратор</div>
+          </div>
+          <i class="bi bi-chevron-down"></i>
+        </div>
+        
+        
+        <div class="user-menu" id="userMenu">
+          <div class="user-menu-item">
+            <i class="bi bi-person"></i>
+            <span id="menuUserName">Администратор</span>
+          </div>
+          <div class="user-menu-item">
+            <i class="bi bi-gear"></i>
+            <span>Настройки</span>
+          </div>
+          <div class="user-menu-divider"></div>
+          <div class="user-menu-item" id="logoutBtn">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Выйти</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    
+    <section class="content">
+      
+      <div id="dashboard" class="view fadeup">
+        <div class="grid" id="statsGrid">
+          <div class="card stat">
+            <div class="label">Выручка сегодня</div>
+            <div class="value" id="revenue-today">0 ₽</div>
+            <div class="muted">Завершено: <span id="completed-today">0</span></div>
+            <div class="stat-icon">
+              <i class="bi bi-currency-dollar" style="color:#10b981"></i>
+            </div>
+          </div>
+          <div class="card stat">
+            <div class="label">Выручка за неделю</div>
+            <div class="value" id="revenue-week">0 ₽</div>
+            <div class="muted">Активных: <span id="active-week">0</span></div>
+            <div class="stat-icon">
+              <i class="bi bi-graph-up" style="color:#7c3aed"></i>
+            </div>
+          </div>
+          <div class="card stat">
+            <div class="label">Выручка за месяц</div>
+            <div class="value" id="revenue-month">0 ₽</div>
+            <div class="muted">Всего: <span id="total-appointments">0</span></div>
+            <div class="stat-icon">
+              <i class="bi bi-calendar-month" style="color:#f59e0b"></i>
+            </div>
+          </div>
+          <div class="card stat">
+            <div class="label">Клиенты</div>
+            <div class="value" id="total-clients">0</div>
+            <div class="muted">Авто: <span id="total-cars">0</span></div>
+            <div class="stat-icon">
+              <i class="bi bi-people" style="color:#06b6d4"></i>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <h5 style="margin:0">Графики — активность</h5>
+              <div class="muted">динамика за 7 дней</div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <button class="btn btn-sm btn-outline-secondary" id="exportCsvBtn"><i class="bi bi-download"></i> Экспорт</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 380px; gap:16px; align-items:center;">
+            <div class="card" style="padding:10px;">
+              <div class="chart-wrap">
+                <canvas id="chartDaily" style="width:100%;"></canvas>
+              </div>
+            </div>
+            <div class="card" style="padding:10px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div><strong>Топ услуг</strong><div class="muted">по числу записей</div></div>
+                <div><i class="bi bi-pie-chart-fill" style="font-size:1.4rem; color:var(--accent)"></i></div>
+              </div>
+              <div style="height:220px; display:flex; align-items:center; justify-content:center; margin-top:8px;">
+                <canvas id="chartTop" style="max-width:260px;"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:18px;">
+          <h5 style="margin:0 0 12px 0">Последние записи</h5>
+          <table class="table compact-table">
+            <thead><tr><th>Время</th><th>Клиент</th><th>Авто</th><th>Услуга</th><th>Сотрудник</th><th>Статус</th><th>Сумма</th></tr></thead>
+            <tbody id="recent-appointments"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      
+      <div id="clients" class="view fadeup" style="display:none;">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><h5 style="margin:0">Клиенты</h5><div class="muted">список всех клиентов</div></div>
+            <div><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#clientModal">+ Новый клиент</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <table class="table compact-table">
+            <thead><tr><th>ФИО / Компания</th><th>Телефон</th><th>Email</th><th>Авто</th><th>Действия</th></tr></thead>
+            <tbody id="clientsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div id="cars" class="view fadeup" style="display:none;">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><h5 style="margin:0">Автомобили</h5><div class="muted">учет автомобилей клиентов</div></div>
+            <div><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#carModal">+ Новое авто</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <table class="table compact-table">
+            <thead><tr><th>Госномер</th><th>Марка/Модель</th><th>Год</th><th>Клиент</th><th>Тип кузова</th><th>Действия</th></tr></thead>
+            <tbody id="carsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="services" class="view fadeup" style="display:none;">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><h5 style="margin:0">Услуги</h5><div class="muted">прайс-лист услуг</div></div>
+            <div><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#serviceModal">+ Новая услуга</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <table class="table compact-table">
+            <thead><tr><th>Название</th><th>Тип</th><th>Цена (₽)</th><th>Действия</th></tr></thead>
+            <tbody id="servicesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="employees" class="view fadeup" style="display:none;">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><h5 style="margin:0">Сотрудники</h5><div class="muted">учет персонала</div></div>
+            <div><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#employeeModal">+ Новый сотрудник</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <table class="table compact-table">
+            <thead><tr><th>Имя</th><th>Телефон</th><th>Роль</th><th>Действия</th></tr></thead>
+            <tbody id="employeesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="appointments" class="view fadeup" style="display:none;">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><h5 style="margin:0">Записи</h5><div class="muted">управление записями</div></div>
+            <div><button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#appointmentModal">+ Новая запись</button></div>
+          </div>
+        </div>
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="row g-2">
+              <div class="col-md-3">
+                <label class="form-label">Статус</label>
+                <select id="filterStatus" class="form-select" onchange="applyFilters()">
+                  <option value="">Все статусы</option>
+                  <option value="pending">Ожидает подтверждения</option>
+                  <option value="confirmed">Подтверждена</option>
+                  <option value="arrived">Клиент приехал</option>
+                  <option value="in_wash">На мойке</option>
+                  <option value="completed">Завершена</option>
+                  <option value="cancelled">Отменена</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Мойка</label>
+                <select id="filterCarWash" class="form-select" onchange="applyFilters()">
+                  <option value="">Все мойки</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Дата с</label>
+                <input id="filterDateFrom" type="date" class="form-control" onchange="applyFilters()">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Дата по</label>
+                <input id="filterDateTo" type="date" class="form-control" onchange="applyFilters()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <table class="table compact-table">
+            <thead><tr><th>Дата и время</th><th>Клиент</th><th>Авто</th><th>Услуга</th><th>Сотрудник</th><th>Статус</th><th>Моечное место</th><th>Сумма</th><th>Действия</th></tr></thead>
+            <tbody id="appointmentsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="shifts" class="view fadeup" style="display:none;">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><h5 style="margin:0">Рабочие смены</h5><div class="muted">учет рабочего времени</div></div>
+            <div><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#shiftModal">+ Новая смена</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <table class="table compact-table">
+            <thead><tr><th>Дата</th><th>Сотрудник</th><th>Начало</th><th>Конец</th><th>Авто обработано</th><th>Действия</th></tr></thead>
+            <tbody id="shiftsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="carwashes" class="view fadeup" style="display:none;">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><h5 style="margin:0">Мойки</h5><div class="muted">управление автомойками</div></div>
+            <div><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#carWashModal">+ Новая мойка</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <table class="table compact-table">
+            <thead><tr><th>Название</th><th>Адрес</th><th>Статус</th><th>Кол-во мест</th><th>Действия</th></tr></thead>
+            <tbody id="carwashesTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="washbays" class="view fadeup" style="display:none;">
+        <div class="card" style="margin-bottom:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div><h5 style="margin:0">Моечные места</h5><div class="muted">управление постами мойки</div></div>
+            <div><button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#washBayModal">+ Новое место</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <table class="table compact-table">
+            <thead><tr><th>Название</th><th>Мойка</th><th>Описание</th><th>Статус</th><th>Действия</th></tr></thead>
+            <tbody id="washbaysTbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="load-dashboard" class="view fadeup" style="display:none;">
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div>
+              <h5 style="margin:0">Загрузка моек</h5>
+              <div class="muted">расписание и занятость</div>
+            </div>
+            <div>
+              <input type="date" id="loadDashboardDate" class="form-control" onchange="renderLoadDashboard()">
+            </div>
+          </div>
+          <div id="loadDashboardContent">
+          </div>
+        </div>
+      </div>
+      
+    </section>
+  </main>
+</div>
+<div class="modal fade" id="clientModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 id="clientModalTitle">Новый клиент</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="clientId">
+        <input id="clientName" class="form-control mb-2" placeholder="ФИО / Компания" required>
+        <input id="clientPhone" class="form-control mb-2" placeholder="Телефон">
+        <input id="clientEmail" class="form-control mb-2" placeholder="Email (необязательно)">
+        <textarea id="clientPreferences" class="form-control" placeholder="Предпочтения" rows="2"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" id="saveClientBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="carModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 id="carModalTitle">Новое авто</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="carId">
+        <select id="carClientIds" class="form-select mb-2 multiselect" multiple>
+          <option value="">Выберите клиентов</option>
+        </select>
+        <input id="carPlate" class="form-control mb-2" placeholder="Госномер" required>
+        <input id="carBrand" class="form-control mb-2" placeholder="Марка" required>
+        <input id="carModel" class="form-control mb-2" placeholder="Модель" required>
+        <input id="carYear" class="form-control mb-2" type="number" placeholder="Год">
+        <select id="carBodyType" class="form-select">
+          <option value="седан">Седан</option>
+          <option value="внедорожник">Внедорожник</option>
+          <option value="хэтчбек">Хэтчбек</option>
+          <option value="универсал">Универсал</option>
+          <option value="минивэн">Минивэн</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" id="saveCarBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="serviceModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 id="serviceModalTitle">Новая услуга</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="serviceId">
+        <input id="serviceName" class="form-control mb-2" placeholder="Название" required>
+        <select id="serviceType" class="form-select mb-2">
+          <option value="мойка">Мойка</option>
+          <option value="доп">Доп. услуга</option>
+        </select>
+        <input id="servicePrice" class="form-control" type="number" placeholder="Цена (₽)" required>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" id="saveServiceBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="employeeModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 id="employeeModalTitle">Новый сотрудник</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="employeeId">
+        <input id="employeeName" class="form-control mb-2" placeholder="Имя" required>
+        <input id="employeePhone" class="form-control mb-2" placeholder="Телефон">
+        <input id="employeeRole" class="form-control" placeholder="Роль">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" id="saveEmployeeBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="appointmentModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 id="appointmentModalTitle">Новая запись</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body row gx-3">
+        <input type="hidden" id="appointmentId">
+        <div class="col-md-6"><label class="form-label">Дата и время</label><input id="apptDateTime" class="form-control" type="datetime-local" required></div>
+        <div class="col-md-6"><label class="form-label">Клиент</label>
+          <select id="apptClient" class="form-select" onchange="loadCarsForClient()">
+            <option value="">Выберите клиента</option>
+            <option value="new">+ Новый клиент</option>
+          </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Авто</label>
+          <select id="apptCar" class="form-select">
+            <option value="">Выберите авто</option>
+            <option value="new">+ Новое авто</option>
+          </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Услуга</label><select id="apptService" class="form-select" onchange="updateAppointmentPrice()"></select></div>
+        <div class="col-md-6"><label class="form-label">Сотрудник</label><select id="apptEmployee" class="form-select"></select></div>
+        <div class="col-md-6"><label class="form-label">Статус</label>
+          <select id="apptStatus" class="form-select">
+            <option value="pending">Ожидает подтверждения</option>
+            <option value="confirmed">Подтверждена</option>
+            <option value="arrived">Клиент приехал</option>
+            <option value="in_wash">На мойке</option>
+            <option value="completed">Завершена</option>
+            <option value="cancelled">Отменена</option>
+          </select>
+        </div>
+        <div class="col-md-6"><label class="form-label">Цена (₽)</label><input id="apptPrice" class="form-control" type="number"></div>
+        <div class="col-md-6">
+          <label class="form-label">Моечное место</label>
+          <div class="input-group">
+            <select id="apptWashBay" class="form-select">
+              <option value="">Не выбрано</option>
+            </select>
+            <button class="btn btn-outline-secondary" type="button" onclick="openWashBayModal()">
+              <i class="bi bi-geo-alt"></i>
+            </button>
+          </div>
+        </div>
+        <div id="newCarFields" class="col-md-12" style="display:none;">
+          <div class="card mt-2 p-3">
+            <h6>Новое авто</h6>
+            <div class="row g-2">
+              <div class="col-md-4"><input id="newCarPlate" class="form-control" placeholder="Госномер"></div>
+              <div class="col-md-4"><input id="newCarBrand" class="form-control" placeholder="Марка"></div>
+              <div class="col-md-4"><input id="newCarModel" class="form-control" placeholder="Модель"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-12"><label class="form-label">Комментарий</label><textarea id="apptComment" class="form-control" rows="2"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" id="saveApptBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="shiftModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 id="shiftModalTitle">Новая смена</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="shiftId">
+        <input id="shiftDate" class="form-control mb-2" type="date" required>
+        <select id="shiftEmployeeId" class="form-select mb-2"></select>
+        <input id="shiftStart" class="form-control mb-2" type="time" required>
+        <input id="shiftEnd" class="form-control mb-2" type="time" required>
+        <input id="shiftCarsCount" class="form-control" type="number" min="0" placeholder="Авто обработано">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" id="saveShiftBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="carWashModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 id="carWashModalTitle">Новая мойка</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="carWashId">
+        <input id="carWashName" class="form-control mb-2" placeholder="Название мойки" required>
+        <input id="carWashAddress" class="form-control mb-2" placeholder="Адрес">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="carWashIsActive" checked>
+          <label class="form-check-label" for="carWashIsActive">Активна</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" id="saveCarWashBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="washBayModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 id="washBayModalTitle">Новое моечное место</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="washBayId">
+        <select id="washBayCarWashId" class="form-select mb-2">
+          <option value="">Выберите мойку</option>
+        </select>
+        <input id="washBayName" class="form-control mb-2" placeholder="Название места" required>
+        <input id="washBayDescription" class="form-control mb-2" placeholder="Описание (необязательно)">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="washBayIsActive" checked>
+          <label class="form-check-label" for="washBayIsActive">Активно</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" id="saveWashBayBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="washBaySelectionModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>Выберите моечное место</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Мойка</label>
+            <select id="washBayCarWash" class="form-select" onchange="loadAvailableWashBays()">
+              <option value="">Выберите мойку</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Дата и время</label>
+            <input id="washBayDateTime" class="form-control" type="datetime-local">
+          </div>
+        </div>
+        <div id="washBayGrid" class="row g-2">
+        </div>
+        <div id="washBayNoSlots" class="text-center py-4" style="display:none;">
+          <i class="bi bi-calendar-x" style="font-size:2rem; color:var(--text-muted);"></i>
+          <p class="mt-2">Нет свободных мест на выбранное время</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="statusModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Изменить статус</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="statusAppointmentId">
+        <select id="statusSelect" class="form-select">
+          <option value="pending">Ожидает подтверждения</option>
+          <option value="confirmed">Подтверждена</option>
+          <option value="arrived">Клиент приехал</option>
+          <option value="in_wash">На мойке</option>
+          <option value="completed">Завершена</option>
+          <option value="cancelled">Отменена</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button class="btn btn-primary" onclick="saveQuickStatus()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const API_URL = 'http://localhost:3001';
+
+
+let currentUser = null;
+
+
+async function checkAuth() {
+  try {
+    const response = await fetch(`${API_URL}/api/auth/check`, {
+      credentials: 'include' 
+    });
+    
+    const data = await response.json();
+    
+    if (data.isAuthenticated && data.user) {
+      currentUser = data.user;
+      showApp();
+      return true;
+    } else {
+      showAuth();
+      return false;
+    }
+  } catch (error) {
+    console.error('Auth check error:', error);
+    showAuth();
+    return false;
+  }
+}
+
+async function login(username, password) {
+  try {
+    showAuthMessage('loginError', '');
+    showAuthMessage('loginSuccess', '');
+    
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password }),
+      credentials: 'include'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      currentUser = data.user;
+      showAuthMessage('loginSuccess', 'Вход выполнен успешно!');
+      setTimeout(() => {
+        showApp();
+      }, 1000);
+      return true;
+    } else {
+      showAuthMessage('loginError', data.message || 'Ошибка входа');
+      return false;
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    showAuthMessage('loginError', 'Ошибка соединения с сервером');
+    return false;
+  }
+}
+
+async function register(name, username, password) {
+  try {
+    showAuthMessage('registerError', '');
+    showAuthMessage('registerSuccess', '');
+    
+    // Проверка пароля
+    if (password.length < 6) {
+      showAuthMessage('registerError', 'Пароль должен быть не менее 6 символов');
+      return false;
+    }
+    
+    if (password !== document.getElementById('registerConfirmPassword').value) {
+      showAuthMessage('registerError', 'Пароли не совпадают');
+      return false;
+    }
+    
+    const response = await fetch(`${API_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, username, password }),
+      credentials: 'include'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      currentUser = data.user;
+      showAuthMessage('registerSuccess', 'Регистрация прошла успешно!');
+      setTimeout(() => {
+        showApp();
+      }, 1000);
+      return true;
+    } else {
+      showAuthMessage('registerError', data.message || 'Ошибка регистрации');
+      return false;
+    }
+  } catch (error) {
+    console.error('Register error:', error);
+    showAuthMessage('registerError', 'Ошибка соединения с сервером');
+    return false;
+  }
+}
+
+async function logout() {
+  try {
+    await fetch(`${API_URL}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+    
+    currentUser = null;
+    showAuth();
+    showToast('Вы успешно вышли из системы');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+}
+
+function showAuthMessage(elementId, message) {
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.textContent = message;
+    element.style.display = message ? 'block' : 'none';
+  }
+}
+
+function showAuth() {
+  document.getElementById('authContainer').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('registerForm').style.display = 'none';
+  
+ 
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('loginSuccess').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('authContainer').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  
+
+  if (currentUser) {
+    document.getElementById('userName').textContent = currentUser.name;
+    document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Администратор' : 'Пользователь';
+    document.getElementById('menuUserName').textContent = currentUser.name;
+    
+    
+    const avatar = document.querySelector('.user-info img');
+    if (avatar) {
+      
+      const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=7c3aed&color=fff&size=40`;
+      avatar.src = avatarUrl;
+    }
+  }
+  
+  
+  initCRM();
+}
+
+function switchAuthForm(toRegister) {
+  if (toRegister) {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    
+    
+    showAuthMessage('loginError', '');
+    showAuthMessage('loginSuccess', '');
+    showAuthMessage('registerError', '');
+    showAuthMessage('registerSuccess', '');
+  } else {
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
+    
+    
+    document.getElementById('registerName').value = '';
+    document.getElementById('registerUsername').value = '';
+    document.getElementById('registerPassword').value = '';
+    document.getElementById('registerConfirmPassword').value = '';
+    showAuthMessage('registerError', '');
+    showAuthMessage('registerSuccess', '');
+    showAuthMessage('loginError', '');
+    showAuthMessage('loginSuccess', '');
+  }
+}
+
+// Обработчики событий для аутентификации
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  
+  if (!username || !password) {
+    showAuthMessage('loginError', 'Заполните все поля');
+    return;
+  }
+  
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('loginBtn').innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Вход...';
+  
+  await login(username, password);
+  
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Войти';
+});
+
+document.getElementById('registerBtn').addEventListener('click', async () => {
+  const name = document.getElementById('registerName').value.trim();
+  const username = document.getElementById('registerUsername').value.trim();
+  const password = document.getElementById('registerPassword').value;
+  
+  if (!name || !username || !password) {
+    showAuthMessage('registerError', 'Заполните все поля');
+    return;
+  }
+  
+  document.getElementById('registerBtn').disabled = true;
+  document.getElementById('registerBtn').innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Регистрация...';
+  
+  await register(name, username, password);
+  
+  document.getElementById('registerBtn').disabled = false;
+  document.getElementById('registerBtn').innerHTML = '<i class="bi bi-person-plus"></i> Зарегистрироваться';
+});
+
+document.getElementById('showRegisterBtn').addEventListener('click', () => {
+  switchAuthForm(true);
+});
+
+document.getElementById('showLoginBtn').addEventListener('click', () => {
+  switchAuthForm(false);
+});
+
+// Обработка Enter в формах
+document.getElementById('loginUsername').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('loginPassword').focus();
+  }
+});
+
+document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('loginBtn').click();
+  }
+});
+
+document.getElementById('registerName').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('registerUsername').focus();
+  }
+});
+
+document.getElementById('registerUsername').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('registerPassword').focus();
+  }
+});
+
+document.getElementById('registerPassword').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('registerConfirmPassword').focus();
+  }
+});
+
+document.getElementById('registerConfirmPassword').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('registerBtn').click();
+  }
+});
+
+// Меню пользователя
+document.getElementById('userInfoBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('userMenu');
+  menu.classList.toggle('show');
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  logout();
+  document.getElementById('userMenu').classList.remove('show');
+});
+
+// Закрытие меню при клике вне его
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.user-info') && !e.target.closest('.user-menu')) {
+    document.getElementById('userMenu').classList.remove('show');
+  }
+});
+
+
+const style = document.createElement('style');
+style.textContent = `
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', async () => {
+  // Проверяем авторизацию
+  const isAuthenticated = await checkAuth();
+  
+  if (isAuthenticated) {
+    console.log('Пользователь авторизован:', currentUser);
+  } else {
+    console.log('Пользователь не авторизован, показываем форму входа');
+  }
+});
+
+const storage = {
+  clients: JSON.parse(localStorage.getItem('crm_clients')||'[]'),
+  cars: JSON.parse(localStorage.getItem('crm_cars')||'[]'),
+  services: JSON.parse(localStorage.getItem('crm_services')||'[]'),
+  employees: JSON.parse(localStorage.getItem('crm_employees')||'[]'),
+  appointments: JSON.parse(localStorage.getItem('crm_appts')||'[]'),
+  shifts: JSON.parse(localStorage.getItem('crm_shifts')||'[]'),
+  carWashes: JSON.parse(localStorage.getItem('crm_carwashes')||'[]'),
+  washBays: JSON.parse(localStorage.getItem('crm_washbays')||'[]'),
+  save(){ 
+    localStorage.setItem('crm_clients', JSON.stringify(this.clients));
+    localStorage.setItem('crm_cars', JSON.stringify(this.cars));
+    localStorage.setItem('crm_services', JSON.stringify(this.services));
+    localStorage.setItem('crm_employees', JSON.stringify(this.employees));
+    localStorage.setItem('crm_appts', JSON.stringify(this.appointments));
+    localStorage.setItem('crm_shifts', JSON.stringify(this.shifts));
+    localStorage.setItem('crm_carwashes', JSON.stringify(this.carWashes));
+    localStorage.setItem('crm_washbays', JSON.stringify(this.washBays));
+  }
+};
+
+// Функции для основного приложения
+let chartDaily=null, chartTop=null;
+
+function initCRM() {
+  // Инициализация основного приложения
+  seedDemo();
+  fillSelects();
+  fillFilterSelects();
+  updateDashboard();
+  renderCharts();
+  renderRecentAppointments();
+  
+  // Устанавливаем текущую дату
+  const today = new Date().toISOString().split('T')[0];
+  $('#loadDashboardDate').value = today;
+  $('#shiftDate').value = today;
+  
+  // Проверяем тему
+  if(localStorage.getItem('crm_theme_dark')==='1'){ 
+    document.body.classList.add('dark'); 
+    $('#themeToggle').textContent='☀️'; 
+  }
+  
+  // Проверяем уведомления
+  const pendingAppointments = storage.appointments.filter(a => a.status === 'pending');
+  if (pendingAppointments.length > 0) {
+    $('#notifPing').style.display = 'block';
+  }
+  
+  // Инициализация навигации
+  $all('nav.leftnav a').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      $all('nav.leftnav a').forEach(x=>x.classList.remove('active'));
+      a.classList.add('active');
+      const section = a.getAttribute('data-section');
+      switchView(section);
+    });
+  });
+  
+  // Переключатель темы
+  $('#themeToggle').addEventListener('click', ()=>{
+    document.body.classList.toggle('dark');
+    $('#themeToggle').textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    localStorage.setItem('crm_theme_dark', document.body.classList.contains('dark')? '1':'0');
+  });
+}
+
+function seedDemo(){
+  if(storage.clients.length===0){
+    const now = new Date();
+    const isoDate = now.toISOString().slice(0,16);
+    
+    storage.clients = [
+      {id:1, name:"Иван Петров", phone:"+79991112233", email:"ivan@example.com", preferences:"Только ручная мойка"},
+      {id:2, name:"Мария Соколова", phone:"+79003332211", email:"maria@example.com", preferences:""},
+      {id:3, name:"Алексей Иванов", phone:"+79994445566", email:"alex@example.com", preferences:""}
+    ];
+    
+    storage.cars = [
+      {id:1, clientIds:[1], plate:"А123ВС", brand:"Toyota", model:"Camry", year:2020, bodyType:"седан"},
+      {id:2, clientIds:[2], plate:"О987КХ", brand:"Kia", model:"Rio", year:2019, bodyType:"хэтчбек"},
+      {id:3, clientIds:[1,2], plate:"Е555ТТ", brand:"BMW", model:"X5", year:2021, bodyType:"внедорожник"}
+    ];
+    
+    storage.services = [
+      {id:1, name:"Ручная мойка", type:"мойка", price:800},
+      {id:2, name:"Антидеготь", type:"доп", price:300},
+      {id:3, name:"Химчистка салона", type:"доп", price:1500},
+      {id:4, name:"Комплексная мойка", type:"мойка", price:1200}
+    ];
+    
+    storage.employees = [
+      {id:1, name:"Андрей", phone:"+79994445566", role:"Мойщик"},
+      {id:2, name:"Сергей", phone:"+79995556677", role:"Старший мойщик"}
+    ];
+    
+    storage.carWashes = [
+      {id: 1, name: "Главная мойка", address: "ул. Центральная, 1", isActive: true},
+      {id: 2, name: "Филиал Северный", address: "ул. Северная, 15", isActive: true},
+      {id: 3, name: "Мойка Премиум", address: "пр. Ленина, 45", isActive: false}
+    ];
+    
+    storage.washBays = [
+      {id: 1, carWashId: 1, name: "Пост №1", description: "Основной пост", isActive: true},
+      {id: 2, carWashId: 1, name: "Пост №2", description: "Бокс для внедорожников", isActive: true},
+      {id: 3, carWashId: 2, name: "Бокс А", description: "Быстрая мойка", isActive: true},
+      {id: 4, carWashId: 2, name: "Бокс Б", description: "Комплексная мойка", isActive: true},
+      {id: 5, carWashId: 3, name: "VIP бокс", description: "Премиум обслуживание", isActive: false}
+    ];
+    
+    storage.appointments = [
+      {id:1, dateTime: new Date(Date.now()-3*24*3600*1000).toISOString().slice(0,16), clientId:1, carId:1, serviceId:1, employeeId:1, status:"completed", price:800, comment:"", washBayId:1},
+      {id:2, dateTime: new Date(Date.now()-2*24*3600*1000).toISOString().slice(0,16), clientId:2, carId:2, serviceId:2, employeeId:2, status:"completed", price:300, comment:"", washBayId:2},
+      {id:3, dateTime: isoDate, clientId:1, carId:1, serviceId:3, employeeId:1, status:"confirmed", price:1500, comment:"Предварительная запись", washBayId:1},
+      {id:4, dateTime: new Date(Date.now()+2*3600*1000).toISOString().slice(0,16), clientId:3, carId:3, serviceId:4, employeeId:2, status:"pending", price:1200, comment:"", washBayId:3}
+    ];
+    
+    storage.shifts = [
+      {id:1, date: new Date().toISOString().split('T')[0], employeeId:1, start:"09:00", end:"18:00", carsCount:8},
+      {id:2, date: new Date().toISOString().split('T')[0], employeeId:2, start:"10:00", end:"19:00", carsCount:12}
+    ];
+    
+    storage.save();
+  }
+}
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function showToast(message, type='success'){
+  const id = 't'+Date.now();
+  const wrap = $('#toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast align-items-center text-white bg-'+(type==='success'?'success':'danger')+' border-0';
+  el.role = 'alert'; el.ariaLive='assertive'; el.ariaAtomic='true';
+  el.style.minWidth='220px';
+  el.innerHTML = `<div class="d-flex">
+    <div class="toast-body">${message}</div>
+    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+  </div>`;
+  wrap.appendChild(el);
+  const t = new bootstrap.Toast(el, {delay:3500});
+  t.show();
+  el.addEventListener('hidden.bs.toast', ()=> el.remove());
+}
+
+function formatDateTime(dtStr) {
+  const dt = new Date(dtStr);
+  return dt.toLocaleDateString('ru-RU') + ' ' + dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+function switchView(id){
+  $all('.view').forEach(v=> v.style.display='none');
+  const el = $('#'+id);
+  if(el) el.style.display = 'block';
+  const title = el ? el.querySelector('h5') || el.querySelector('.muted') || el.querySelector('.card h5') : null;
+  $('.section-title').textContent = id==='dashboard' ? 'Дашборд' : (id[0].toUpperCase()+id.slice(1));
+  
+  if(id==='dashboard'){ 
+    updateDashboard(); 
+    renderCharts(); 
+  } else if(id==='clients'){ 
+    renderClientsTable(); 
+  } else if(id==='cars'){ 
+    renderCarsTable(); 
+  } else if(id==='services'){ 
+    renderServicesTable(); 
+  } else if(id==='employees'){ 
+    renderEmployeesTable(); 
+  } else if(id==='appointments'){ 
+    renderApptsTable(); 
+  } else if(id==='shifts'){ 
+    renderShiftsTable(); 
+  } else if(id==='carwashes'){ 
+    renderCarWashesTable(); 
+  } else if(id==='washbays'){ 
+    renderWashBaysTable(); 
+  } else if(id==='load-dashboard'){ 
+    renderLoadDashboard(); 
+  }
+}
+
+function renderClientsTable(){
+  const tb = $('#clientsTbody'); tb.innerHTML='';
+  storage.clients.forEach(c=>{
+    const carsCount = storage.cars.filter(x=>x.clientIds.includes(c.id)).length;
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${c.name}</td>
+      <td>${c.phone||''}</td>
+      <td>${c.email||''}</td>
+      <td>${carsCount}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editClient(${c.id})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteClient(${c.id})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(row);
+  });
+}
+
+function renderCarsTable(){
+  const tb = $('#carsTbody'); tb.innerHTML='';
+  storage.cars.forEach(car=>{
+    const clients = storage.clients.filter(c => car.clientIds.includes(c.id));
+    const clientNames = clients.map(c => c.name).join(', ');
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${car.plate}</td>
+      <td>${car.brand} ${car.model}</td>
+      <td>${car.year || ''}</td>
+      <td>${clientNames || '—'}</td>
+      <td>${car.bodyType}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editCar(${car.id})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteCar(${car.id})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(row);
+  });
+}
+
+function renderServicesTable(){
+  const tb = $('#servicesTbody'); tb.innerHTML='';
+  storage.services.forEach(s=>{
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${s.name}</td>
+      <td>${s.type === 'мойка' ? 'Мойка' : 'Доп. услуга'}</td>
+      <td>${s.price}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editService(${s.id})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteService(${s.id})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(row);
+  });
+}
+
+function renderEmployeesTable(){
+  const tb = $('#employeesTbody'); tb.innerHTML='';
+  storage.employees.forEach(e=>{
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${e.name}</td>
+      <td>${e.phone || ''}</td>
+      <td>${e.role || ''}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editEmployee(${e.id})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteEmployee(${e.id})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(row);
+  });
+}
+
+function renderApptsTable(){
+  const tb = $('#appointmentsTbody'); tb.innerHTML='';
+  const filteredAppts = getFilteredAppointments();
+  
+  filteredAppts.sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).forEach(a=>{
+    const client = storage.clients.find(c=>c.id===a.clientId) || {};
+    const car = storage.cars.find(c=>c.id===a.carId) || {};
+    const service = storage.services.find(s=>s.id===a.serviceId) || {};
+    const emp = storage.employees.find(e=>e.id===a.employeeId) || {};
+    const washBay = storage.washBays.find(b=>b.id===a.washBayId) || {};
+    
+    const statusMap = { 
+      'pending': '#94a3b8', 
+      'confirmed': '#3b82f6', 
+      'arrived': '#f59e0b', 
+      'in_wash': '#7c3aed', 
+      'completed': '#10b981', 
+      'cancelled': '#ef4444' 
+    };
+    
+    const statusTextMap = {
+      'pending': 'Ожидает',
+      'confirmed': 'Подтверждена',
+      'arrived': 'Приехал',
+      'in_wash': 'На мойке',
+      'completed': 'Завершена',
+      'cancelled': 'Отменена'
+    };
+    
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${formatDateTime(a.dateTime)}</td>
+      <td>${client.name||'—'}</td>
+      <td>${car.plate||'—'}</td>
+      <td>${service.name||'—'}</td>
+      <td>${emp.name||'—'}</td>
+      <td><span class="badge-status" style="background:${statusMap[a.status]}; color:white;" onclick="quickChangeStatus(${a.id})">${statusTextMap[a.status]}</span></td>
+      <td>${washBay.name || '—'}</td>
+      <td>${a.price||0} ₽</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editAppt(${a.id})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteAppt(${a.id})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(row);
+  });
+}
+
+function renderShiftsTable(){
+  const tb = $('#shiftsTbody'); tb.innerHTML='';
+  storage.shifts.forEach(s=>{
+    const emp = storage.employees.find(e=>e.id===s.employeeId) || {};
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${s.date}</td>
+      <td>${emp.name||'—'}</td>
+      <td>${s.start}</td>
+      <td>${s.end}</td>
+      <td>${s.carsCount||0}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editShift(${s.id})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteShift(${s.id})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(row);
+  });
+}
+
+function renderCarWashesTable(){
+  const tb = $('#carwashesTbody'); tb.innerHTML='';
+  storage.carWashes.forEach(cw=>{
+    const baysCount = storage.washBays.filter(b => b.carWashId === cw.id).length;
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${cw.name}</td>
+      <td>${cw.address||''}</td>
+      <td><span class="badge ${cw.isActive ? 'bg-success' : 'bg-secondary'}">${cw.isActive ? 'Активна' : 'Неактивна'}</span></td>
+      <td>${baysCount}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editCarWash(${cw.id})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteCarWash(${cw.id})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(row);
+  });
+}
+
+function renderWashBaysTable(){
+  const tb = $('#washbaysTbody'); tb.innerHTML='';
+  storage.washBays.forEach(bay=>{
+    const carWash = storage.carWashes.find(cw => cw.id === bay.carWashId);
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${bay.name}</td>
+      <td>${carWash?.name || '—'}</td>
+      <td>${bay.description||''}</td>
+      <td><span class="badge ${bay.isActive ? 'bg-success' : 'bg-secondary'}">${bay.isActive ? 'Активно' : 'Неактивно'}</span></td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editWashBay(${bay.id})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteWashBay(${bay.id})"><i class="bi bi-trash"></i></button>
+      </td>`;
+    tb.appendChild(row);
+  });
+}
+
+function renderRecentAppointments(){
+  const tb = $('#recent-appointments'); tb.innerHTML='';
+  const recent = [...storage.appointments]
+    .sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime))
+    .slice(0, 10);
+  
+  recent.forEach(a=>{
+    const client = storage.clients.find(c=>c.id===a.clientId) || {};
+    const car = storage.cars.find(c=>c.id===a.carId) || {};
+    const service = storage.services.find(s=>s.id===a.serviceId) || {};
+    const emp = storage.employees.find(e=>e.id===a.employeeId) || {};
+    
+    const statusMap = { 
+      'pending': '#94a3b8', 
+      'confirmed': '#3b82f6', 
+      'arrived': '#f59e0b', 
+      'in_wash': '#7c3aed', 
+      'completed': '#10b981', 
+      'cancelled': '#ef4444' 
+    };
+    
+    const statusTextMap = {
+      'pending': 'Ожидает',
+      'confirmed': 'Подтверждена',
+      'arrived': 'Приехал',
+      'in_wash': 'На мойке',
+      'completed': 'Завершена',
+      'cancelled': 'Отменена'
+    };
+    
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${formatDateTime(a.dateTime)}</td>
+      <td>${client.name||'—'}</td>
+      <td>${car.plate||'—'}</td>
+      <td>${service.name||'—'}</td>
+      <td>${emp.name||'—'}</td>
+      <td><span class="badge-status" style="background:${statusMap[a.status]}; color:white;">${statusTextMap[a.status]}</span></td>
+      <td>${a.price||0} ₽</td>`;
+    tb.appendChild(row);
+  });
+}
+
+function saveClient(){
+  const id = $('#clientId').value || Date.now();
+  const name = $('#clientName').value.trim();
+  const phone = $('#clientPhone').value.trim();
+  const email = $('#clientEmail').value.trim();
+  const preferences = $('#clientPreferences').value.trim();
+  
+  if(!name){ showToast('Укажите имя клиента','error'); return; }
+  
+  const client = { id: parseInt(id), name, phone, email, preferences };
+  const idx = storage.clients.findIndex(c => c.id == id);
+  
+  if(idx === -1) {
+    storage.clients.push(client);
+  } else {
+    storage.clients[idx] = client;
+  }
+  
+  storage.save();
+  renderClientsTable();
+  fillSelects();
+  bootstrap.Modal.getInstance($('#clientModal')).hide();
+  resetClientModal();
+  showToast(idx === -1 ? 'Клиент добавлен' : 'Клиент обновлен');
+}
+
+function deleteClient(id){
+  if(!confirm('Удалить клиента и все его авто?')) return;
+  storage.cars = storage.cars.filter(c=>!c.clientIds.includes(id));
+  storage.clients = storage.clients.filter(c=>c.id!==id);
+  storage.save();
+  renderClientsTable(); 
+  renderApptsTable(); 
+  renderCarsTable();
+  fillSelects(); 
+  updateDashboard(); 
+  renderCharts();
+  showToast('Клиент удалён');
+}
+
+function editClient(id){
+  const c = storage.clients.find(x=>x.id===id);
+  if(!c) return;
+  $('#clientId').value = c.id;
+  $('#clientName').value = c.name;
+  $('#clientPhone').value = c.phone || '';
+  $('#clientEmail').value = c.email || '';
+  $('#clientPreferences').value = c.preferences || '';
+  $('#clientModalTitle').textContent = 'Редактировать клиента';
+  new bootstrap.Modal($('#clientModal')).show();
+}
+
+function resetClientModal(){
+  $('#clientId').value = '';
+  $('#clientName').value = '';
+  $('#clientPhone').value = '';
+  $('#clientEmail').value = '';
+  $('#clientPreferences').value = '';
+  $('#clientModalTitle').textContent = 'Новый клиент';
+}
+
+function saveCar(){
+  const id = $('#carId').value || Date.now();
+  const clientIds = Array.from($('#carClientIds').selectedOptions).map(opt => parseInt(opt.value));
+  const plate = $('#carPlate').value.trim();
+  const brand = $('#carBrand').value.trim();
+  const model = $('#carModel').value.trim();
+  const year = parseInt($('#carYear').value) || null;
+  const bodyType = $('#carBodyType').value;
+  
+  if(!plate || clientIds.length === 0){ 
+    showToast('Заполните госномер и выберите клиентов','error'); 
+    return; 
+  }
+  
+  const car = { 
+    id: parseInt(id), 
+    clientIds,
+    plate, 
+    brand, 
+    model, 
+    year, 
+    bodyType 
+  };
+  
+  const idx = storage.cars.findIndex(c => c.id == id);
+  
+  if(idx === -1) {
+    storage.cars.push(car);
+  } else {
+    storage.cars[idx] = car;
+  }
+  
+  storage.save();
+  renderCarsTable();
+  fillSelects();
+  bootstrap.Modal.getInstance($('#carModal')).hide();
+  resetCarModal();
+  showToast(idx === -1 ? 'Автомобиль добавлен' : 'Автомобиль обновлен');
+}
+
+function deleteCar(id){
+  if(confirm('Удалить авто?')) {
+    storage.cars = storage.cars.filter(c=>c.id!==id);
+    storage.save();
+    renderCarsTable();
+    renderApptsTable();
+    fillSelects();
+    showToast('Автомобиль удалён');
+  }
+}
+
+function editCar(id){
+  const c = storage.cars.find(x=>x.id===id);
+  if(!c) return;
+  $('#carId').value = c.id;
+  const clientSelect = $('#carClientIds');
+  Array.from(clientSelect.options).forEach(option => {
+    option.selected = c.clientIds.includes(parseInt(option.value));
+  });
+  
+  $('#carPlate').value = c.plate;
+  $('#carBrand').value = c.brand;
+  $('#carModel').value = c.model;
+  $('#carYear').value = c.year || '';
+  $('#carBodyType').value = c.bodyType;
+  $('#carModalTitle').textContent = 'Редактировать авто';
+  fillSelects();
+  new bootstrap.Modal($('#carModal')).show();
+}
+
+function resetCarModal(){
+  $('#carId').value = '';
+  $('#carClientIds').selectedIndex = -1;
+  $('#carPlate').value = '';
+  $('#carBrand').value = '';
+  $('#carModel').value = '';
+  $('#carYear').value = '';
+  $('#carBodyType').value = 'седан';
+  $('#carModalTitle').textContent = 'Новое авто';
+}
+
+function saveService(){
+  const id = $('#serviceId').value || Date.now();
+  const name = $('#serviceName').value.trim();
+  const type = $('#serviceType').value;
+  const price = parseFloat($('#servicePrice').value);
+  
+  if(!name || isNaN(price)){ showToast('Заполните название и цену','error'); return; }
+  
+  const service = { id: parseInt(id), name, type, price };
+  const idx = storage.services.findIndex(s => s.id == id);
+  
+  if(idx === -1) {
+    storage.services.push(service);
+  } else {
+    storage.services[idx] = service;
+  }
+  
+  storage.save();
+  renderServicesTable();
+  fillSelects();
+  bootstrap.Modal.getInstance($('#serviceModal')).hide();
+  resetServiceModal();
+  showToast(idx === -1 ? 'Услуга добавлена' : 'Услуга обновлена');
+}
+
+function deleteService(id){
+  if(confirm('Удалить услугу?')) {
+    storage.services = storage.services.filter(s=>s.id!==id);
+    storage.save();
+    renderServicesTable();
+    fillSelects();
+    showToast('Услуга удалена');
+  }
+}
+
+function editService(id){
+  const s = storage.services.find(x=>x.id===id);
+  if(!s) return;
+  $('#serviceId').value = s.id;
+  $('#serviceName').value = s.name;
+  $('#serviceType').value = s.type;
+  $('#servicePrice').value = s.price;
+  $('#serviceModalTitle').textContent = 'Редактировать услугу';
+  new bootstrap.Modal($('#serviceModal')).show();
+}
+
+function resetServiceModal(){
+  $('#serviceId').value = '';
+  $('#serviceName').value = '';
+  $('#serviceType').value = 'мойка';
+  $('#servicePrice').value = '';
+  $('#serviceModalTitle').textContent = 'Новая услуга';
+}
+
+function saveEmployee(){
+  const id = $('#employeeId').value || Date.now();
+  const name = $('#employeeName').value.trim();
+  const phone = $('#employeePhone').value.trim();
+  const role = $('#employeeRole').value.trim();
+  
+  if(!name){ showToast('Укажите имя сотрудника','error'); return; }
+  
+  const employee = { id: parseInt(id), name, phone, role };
+  const idx = storage.employees.findIndex(e => e.id == id);
+  
+  if(idx === -1) {
+    storage.employees.push(employee);
+  } else {
+    storage.employees[idx] = employee;
+  }
+  
+  storage.save();
+  renderEmployeesTable();
+  fillSelects();
+  bootstrap.Modal.getInstance($('#employeeModal')).hide();
+  resetEmployeeModal();
+  showToast(idx === -1 ? 'Сотрудник добавлен' : 'Сотрудник обновлен');
+}
+
+function deleteEmployee(id){
+  if(confirm('Удалить сотрудника?')) {
+    storage.employees = storage.employees.filter(e=>e.id!==id);
+    storage.save();
+    renderEmployeesTable();
+    fillSelects();
+    showToast('Сотрудник удалён');
+  }
+}
+
+function editEmployee(id){
+  const e = storage.employees.find(x=>x.id===id);
+  if(!e) return;
+  $('#employeeId').value = e.id;
+  $('#employeeName').value = e.name;
+  $('#employeePhone').value = e.phone || '';
+  $('#employeeRole').value = e.role || '';
+  $('#employeeModalTitle').textContent = 'Редактировать сотрудника';
+  new bootstrap.Modal($('#employeeModal')).show();
+}
+
+function resetEmployeeModal(){
+  $('#employeeId').value = '';
+  $('#employeeName').value = '';
+  $('#employeePhone').value = '';
+  $('#employeeRole').value = '';
+  $('#employeeModalTitle').textContent = 'Новый сотрудник';
+}
+
+function saveAppt(){
+  const id = $('#appointmentId').value || Date.now();
+  const dateTime = $('#apptDateTime').value;
+  const clientId = parseInt($('#apptClient').value);
+  const carId = $('#apptCar').value === 'new' ? null : parseInt($('#apptCar').value);
+  const serviceId = parseInt($('#apptService').value);
+  const employeeId = parseInt($('#apptEmployee').value) || null;
+  const status = $('#apptStatus').value;
+  const price = parseFloat($('#apptPrice').value) || 0;
+  const comment = $('#apptComment').value || '';
+  const washBayId = parseInt($('#apptWashBay').value) || null;
+
+  let newCarId = null;
+  if ($('#apptCar').value === 'new') {
+    const plate = $('#newCarPlate').value.trim();
+    const brand = $('#newCarBrand').value.trim();
+    const model = $('#newCarModel').value.trim();
+    
+    if (plate && brand && model) {
+      newCarId = Date.now();
+      const newCar = {
+        id: newCarId,
+        clientIds: [clientId],
+        plate,
+        brand,
+        model,
+        year: null,
+        bodyType: 'седан'
+      };
+      storage.cars.push(newCar);
+    }
+  }
+  
+  if(!dateTime || !clientId || !serviceId){ 
+    showToast('Заполните дату, клиента и услугу','error'); 
+    return; 
+  }
+  
+  const finalCarId = newCarId || carId;
+  
+  const appointment = { 
+    id: parseInt(id), 
+    dateTime: new Date(dateTime).toISOString(), 
+    clientId, 
+    carId: finalCarId,
+    serviceId, 
+    employeeId, 
+    status, 
+    price, 
+    comment,
+    washBayId
+  };
+  
+  const idx = storage.appointments.findIndex(a => a.id == id);
+  
+  if(idx === -1) {
+    storage.appointments.push(appointment);
+  } else {
+    storage.appointments[idx] = appointment;
+  }
+  
+  storage.save(); 
+  renderApptsTable(); 
+  renderRecentAppointments();
+  updateDashboard(); 
+  renderCharts();
+  bootstrap.Modal.getInstance($('#appointmentModal')).hide();
+  resetAppointmentModal();
+  showToast(idx === -1 ? 'Запись добавлена' : 'Запись обновлена');
+}
+
+function deleteAppt(id){
+  if(!confirm('Удалить запись?')) return;
+  storage.appointments = storage.appointments.filter(a=>a.id!==id);
+  storage.save(); 
+  renderApptsTable(); 
+  renderRecentAppointments();
+  updateDashboard(); 
+  renderCharts(); 
+  showToast('Запись удалена');
+}
+
+function editAppt(id){
+  const a = storage.appointments.find(x=>x.id===id);
+  if(!a) return;
+  $('#appointmentId').value = a.id;
+  $('#apptDateTime').value = new Date(a.dateTime).toISOString().slice(0,16);
+  $('#apptClient').value = a.clientId; 
+  loadCarsForClient(); 
+  setTimeout(()=> $('#apptCar').value = a.carId, 50);
+  $('#apptService').value = a.serviceId;
+  $('#apptEmployee').value = a.employeeId;
+  $('#apptStatus').value = a.status;
+  $('#apptPrice').value = a.price;
+  $('#apptComment').value = a.comment;
+  $('#apptWashBay').value = a.washBayId || '';
+  $('#appointmentModalTitle').textContent = 'Редактировать запись';
+  new bootstrap.Modal($('#appointmentModal')).show();
+}
+
+function resetAppointmentModal(){
+  $('#appointmentId').value = '';
+  $('#apptDateTime').value = '';
+  $('#apptClient').value = '';
+  $('#apptCar').innerHTML = '<option value="">— авто —</option><option value="new">+ Новое авто</option>';
+  $('#apptService').value = '';
+  $('#apptEmployee').value = '';
+  $('#apptStatus').value = 'pending';
+  $('#apptPrice').value = '';
+  $('#apptComment').value = '';
+  $('#apptWashBay').value = '';
+  $('#newCarFields').style.display = 'none';
+  $('#appointmentModalTitle').textContent = 'Новая запись';
+}
+
+function saveShift(){
+  const id = $('#shiftId').value || Date.now();
+  const date = $('#shiftDate').value;
+  const employeeId = parseInt($('#shiftEmployeeId').value);
+  const start = $('#shiftStart').value;
+  const end = $('#shiftEnd').value;
+  const carsCount = parseInt($('#shiftCarsCount').value) || 0;
+  
+  if(!date || !employeeId || !start || !end){ 
+    showToast('Заполните все поля','error'); 
+    return; 
+  }
+  
+  const shift = { 
+    id: parseInt(id), 
+    date, 
+    employeeId, 
+    start, 
+    end, 
+    carsCount 
+  };
+  
+  const idx = storage.shifts.findIndex(s => s.id == id);
+  
+  if(idx === -1) {
+    storage.shifts.push(shift);
+  } else {
+    storage.shifts[idx] = shift;
+  }
+  
+  storage.save(); 
+  renderShiftsTable();
+  bootstrap.Modal.getInstance($('#shiftModal')).hide();
+  resetShiftModal();
+  showToast(idx === -1 ? 'Смена добавлена' : 'Смена обновлена');
+}
+
+function deleteShift(id){
+  if(confirm('Удалить смену?')) {
+    storage.shifts = storage.shifts.filter(s=>s.id!==id);
+    storage.save(); 
+    renderShiftsTable();
+  }
+}
+
+function editShift(id){
+  const s = storage.shifts.find(x=>x.id===id);
+  if(!s) return;
+  $('#shiftId').value = s.id;
+  $('#shiftDate').value = s.date;
+  $('#shiftEmployeeId').value = s.employeeId;
+  $('#shiftStart').value = s.start;
+  $('#shiftEnd').value = s.end;
+  $('#shiftCarsCount').value = s.carsCount;
+  $('#shiftModalTitle').textContent = 'Редактировать смену';
+  fillSelects();
+  new bootstrap.Modal($('#shiftModal')).show();
+}
+
+function resetShiftModal(){
+  $('#shiftId').value = '';
+  $('#shiftDate').value = '';
+  $('#shiftEmployeeId').value = '';
+  $('#shiftStart').value = '';
+  $('#shiftEnd').value = '';
+  $('#shiftCarsCount').value = '';
+  $('#shiftModalTitle').textContent = 'Новая смена';
+}
+
+function saveCarWash(){
+  const id = $('#carWashId').value || Date.now();
+  const name = $('#carWashName').value.trim();
+  const address = $('#carWashAddress').value.trim();
+  const isActive = $('#carWashIsActive').checked;
+  
+  if(!name){ showToast('Укажите название мойки','error'); return; }
+  
+  const carWash = { 
+    id: parseInt(id), 
+    name, 
+    address, 
+    isActive 
+  };
+  
+  const idx = storage.carWashes.findIndex(cw => cw.id == id);
+  
+  if(idx === -1) {
+    storage.carWashes.push(carWash);
+  } else {
+    storage.carWashes[idx] = carWash;
+  }
+  
+  storage.save();
+  renderCarWashesTable();
+  fillSelects();
+  bootstrap.Modal.getInstance($('#carWashModal')).hide();
+  resetCarWashModal();
+  showToast(idx === -1 ? 'Мойка добавлена' : 'Мойка обновлена');
+}
+
+function deleteCarWash(id){
+  const hasBays = storage.washBays.some(bay => bay.carWashId === id);
+  if(hasBays){
+    showToast('Нельзя удалить мойку с привязанными местами','error');
+    return;
+  }
+  
+  if(confirm('Удалить мойку?')) {
+    storage.carWashes = storage.carWashes.filter(cw=>cw.id!==id);
+    storage.save();
+    renderCarWashesTable();
+    fillSelects();
+    showToast('Мойка удалена');
+  }
+}
+
+function editCarWash(id){
+  const cw = storage.carWashes.find(x=>x.id===id);
+  if(!cw) return;
+  $('#carWashId').value = cw.id;
+  $('#carWashName').value = cw.name;
+  $('#carWashAddress').value = cw.address || '';
+  $('#carWashIsActive').checked = cw.isActive;
+  $('#carWashModalTitle').textContent = 'Редактировать мойку';
+  new bootstrap.Modal($('#carWashModal')).show();
+}
+
+function resetCarWashModal(){
+  $('#carWashId').value = '';
+  $('#carWashName').value = '';
+  $('#carWashAddress').value = '';
+  $('#carWashIsActive').checked = true;
+  $('#carWashModalTitle').textContent = 'Новая мойка';
+}
+
+function saveWashBay(){
+  const id = $('#washBayId').value || Date.now();
+  const carWashId = parseInt($('#washBayCarWashId').value);
+  const name = $('#washBayName').value.trim();
+  const description = $('#washBayDescription').value.trim();
+  const isActive = $('#washBayIsActive').checked;
+  
+  if(!name || !carWashId){ 
+    showToast('Заполните название и выберите мойку','error'); 
+    return; 
+  }
+  
+  const washBay = { 
+    id: parseInt(id), 
+    carWashId, 
+    name, 
+    description, 
+    isActive 
+  };
+  
+  const idx = storage.washBays.findIndex(wb => wb.id == id);
+  
+  if(idx === -1) {
+    storage.washBays.push(washBay);
+  } else {
+    storage.washBays[idx] = washBay;
+  }
+  
+  storage.save();
+  renderWashBaysTable();
+  fillSelects();
+  bootstrap.Modal.getInstance($('#washBayModal')).hide();
+  resetWashBayModal();
+  showToast(idx === -1 ? 'Моечное место добавлено' : 'Моечное место обновлено');
+}
+
+function deleteWashBay(id){
+  const hasAppointments = storage.appointments.some(appt => appt.washBayId === id);
+  if(hasAppointments){
+    showToast('Нельзя удалить место с привязанными записями','error');
+    return;
+  }
+  
+  if(confirm('Удалить моечное место?')) {
+    storage.washBays = storage.washBays.filter(wb=>wb.id!==id);
+    storage.save();
+    renderWashBaysTable();
+    fillSelects();
+    showToast('Моечное место удалено');
+  }
+}
+
+function editWashBay(id){
+  const wb = storage.washBays.find(x=>x.id===id);
+  if(!wb) return;
+  $('#washBayId').value = wb.id;
+  $('#washBayCarWashId').value = wb.carWashId;
+  $('#washBayName').value = wb.name;
+  $('#washBayDescription').value = wb.description || '';
+  $('#washBayIsActive').checked = wb.isActive;
+  $('#washBayModalTitle').textContent = 'Редактировать моечное место';
+  fillSelects();
+  new bootstrap.Modal($('#washBayModal')).show();
+}
+
+function resetWashBayModal(){
+  $('#washBayId').value = '';
+  $('#washBayCarWashId').value = '';
+  $('#washBayName').value = '';
+  $('#washBayDescription').value = '';
+  $('#washBayIsActive').checked = true;
+  $('#washBayModalTitle').textContent = 'Новое моечное место';
+}
+
+function quickChangeStatus(appointmentId) {
+  const appointment = storage.appointments.find(a => a.id === appointmentId);
+  if (!appointment) return;
+  
+  $('#statusAppointmentId').value = appointmentId;
+  $('#statusSelect').value = appointment.status;
+  new bootstrap.Modal($('#statusModal')).show();
+}
+
+function saveQuickStatus() {
+  const appointmentId = parseInt($('#statusAppointmentId').value);
+  const newStatus = $('#statusSelect').value;
+  
+  const appointment = storage.appointments.find(a => a.id === appointmentId);
+  if (appointment) {
+    appointment.status = newStatus;
+    storage.save();
+    renderApptsTable();
+    renderRecentAppointments();
+    updateDashboard();
+    bootstrap.Modal.getInstance($('#statusModal')).hide();
+    showToast('Статус обновлен');
+  }
+}
+
+function openWashBayModal() {
+  const dateTime = $('#apptDateTime').value;
+  if (!dateTime) {
+    showToast('Сначала выберите дату и время', 'error');
+    return;
+  }
+  
+  $('#washBayDateTime').value = dateTime;
+  fillCarWashSelect();
+  loadAvailableWashBays();
+  new bootstrap.Modal($('#washBaySelectionModal')).show();
+}
+
+function fillCarWashSelect() {
+  const select = $('#washBayCarWash');
+  select.innerHTML = '<option value="">Выберите мойку</option>';
+  storage.carWashes.filter(w => w.isActive).forEach(wash => {
+    const option = document.createElement('option');
+    option.value = wash.id;
+    option.textContent = wash.name;
+    select.appendChild(option);
+  });
+}
+
+function loadAvailableWashBays() {
+  const carWashId = parseInt($('#washBayCarWash').value);
+  const dateTime = $('#washBayDateTime').value;
+  
+  if (!carWashId || !dateTime) return;
+  
+  const grid = $('#washBayGrid');
+  const noSlots = $('#washBayNoSlots');
+  grid.innerHTML = '';
+  
+  const washBays = storage.washBays.filter(bay => 
+    bay.carWashId === carWashId && bay.isActive
+  );
+  
+  let availableCount = 0;
+  
+  washBays.forEach(bay => {
+    const isAvailable = isWashBayAvailable(bay.id, dateTime);
+    
+    const col = document.createElement('div');
+    col.className = 'col-md-6';
+    
+    col.innerHTML = `
+      <div class="card wash-bay-card ${isAvailable ? 'available' : 'busy'}" 
+           style="cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; opacity: ${isAvailable ? 1 : 0.6}"
+           onclick="${isAvailable ? `selectWashBay(${bay.id})` : ''}">
+        <div class="card-body text-center">
+          <h6>${bay.name}</h6>
+          <small class="text-muted">${bay.description || ''}</small>
+          <div class="mt-2">
+            <span class="badge ${isAvailable ? 'bg-success' : 'bg-danger'}">
+              ${isAvailable ? 'Свободно' : 'Занято'}
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    grid.appendChild(col);
+    if (isAvailable) availableCount++;
+  });
+  
+  if (availableCount === 0) {
+    noSlots.style.display = 'block';
+  } else {
+    noSlots.style.display = 'none';
+  }
+}
+
+function isWashBayAvailable(washBayId, dateTime) {
+  const targetTime = new Date(dateTime);
+  const targetEnd = new Date(targetTime.getTime() + 60 * 60 * 1000); // +1 час
+  
+  const conflictingAppt = storage.appointments.find(appt => {
+    if (appt.washBayId !== washBayId) return false;
+    if (appt.status === 'cancelled' || appt.status === 'completed') return false;
+    
+    const apptStart = new Date(appt.dateTime);
+    const apptEnd = new Date(apptStart.getTime() + 60 * 60 * 1000); // +1 час
+    
+    return (targetTime < apptEnd && targetEnd > apptStart);
+  });
+  
+  return !conflictingAppt;
+}
+
+function selectWashBay(washBayId) {
+  $('#apptWashBay').value = washBayId;
+  const bay = storage.washBays.find(b => b.id === washBayId);
+  if (bay) {
+    showToast(`Выбрано место: ${bay.name}`);
+  }
+  bootstrap.Modal.getInstance($('#washBaySelectionModal')).hide();
+}
+
+function applyFilters() {
+  renderApptsTable();
+}
+
+function getFilteredAppointments() {
+  const statusFilter = $('#filterStatus').value;
+  const carWashFilter = $('#filterCarWash').value;
+  const dateFrom = $('#filterDateFrom').value;
+  const dateTo = $('#filterDateTo').value;
+  
+  return storage.appointments.filter(appt => {
+    if (statusFilter && appt.status !== statusFilter) return false;
+    
+    if (carWashFilter && appt.washBayId) {
+      const bay = storage.washBays.find(b => b.id === appt.washBayId);
+      if (!bay || bay.carWashId != carWashFilter) return false;
+    }
+    
+    if (dateFrom || dateTo) {
+      const apptDate = new Date(appt.dateTime).toISOString().split('T')[0];
+      if (dateFrom && apptDate < dateFrom) return false;
+      if (dateTo && apptDate > dateTo) return false;
+    }
+    
+    return true;
+  });
+}
+
+function renderLoadDashboard() {
+  const date = $('#loadDashboardDate').value || new Date().toISOString().split('T')[0];
+  const container = $('#loadDashboardContent');
+  container.innerHTML = '';
+  
+  storage.carWashes.forEach(carWash => {
+    const washCard = document.createElement('div');
+    washCard.className = 'card mb-4';
+    washCard.innerHTML = `
+      <div class="card-header">
+        <h6 class="mb-0">${carWash.name}</h6>
+        <small class="text-muted">${carWash.address}</small>
+      </div>
+      <div class="card-body">
+        <div id="wash-${carWash.id}-schedule" class="schedule-container"></div>
+      </div>
+    `;
+    container.appendChild(washCard);
+    
+    renderWashSchedule(carWash.id, date);
+  });
+}
+
+function renderWashSchedule(carWashId, date) {
+  const container = $(`#wash-${carWashId}-schedule`);
+  const washBays = storage.washBays.filter(bay => bay.carWashId === carWashId);
+  
+  let html = '<div class="schedule-grid">';
+
+  html += '<div class="schedule-header">';
+  html += '<div class="time-slot"></div>';
+  for (let hour = 8; hour < 22; hour++) {
+    html += `<div class="time-slot">${hour}:00</div>`;
+  }
+  html += '</div>';
+
+  washBays.forEach(bay => {
+    html += `<div class="schedule-row">
+      <div class="bay-name">${bay.name}</div>`;
+    
+    for (let hour = 8; hour < 22; hour++) {
+      const slotStart = new Date(date + 'T' + hour.toString().padStart(2, '0') + ':00');
+      const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+      
+      const appointment = findAppointmentForSlot(bay.id, slotStart, slotEnd);
+      const statusClass = appointment ? getStatusClass(appointment.status) : 'free';
+      const title = appointment ? 
+        `${getClientName(appointment.clientId)} - ${getServiceName(appointment.serviceId)}` : 
+        'Свободно';
+      
+      html += `<div class="time-slot ${statusClass}" title="${title}">
+        ${appointment ? '●' : ''}
+      </div>`;
+    }
+    
+    html += '</div>';
+  });
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function findAppointmentForSlot(washBayId, slotStart, slotEnd) {
+  return storage.appointments.find(appt => {
+    if (appt.washBayId !== washBayId) return false;
+    if (appt.status === 'cancelled') return false;
+    
+    const apptStart = new Date(appt.dateTime);
+    const apptEnd = new Date(apptStart.getTime() + 60 * 60 * 1000);
+    
+    return (slotStart < apptEnd && slotEnd > apptStart);
+  });
+}
+
+function getStatusClass(status) {
+  const statusClasses = {
+    'pending': 'status-pending',
+    'confirmed': 'status-confirmed',
+    'arrived': 'status-arrived',
+    'in_wash': 'status-inwash',
+    'completed': 'status-completed'
+  };
+  return statusClasses[status] || 'status-unknown';
+}
+
+function getClientName(clientId) {
+  const client = storage.clients.find(c => c.id === clientId);
+  return client ? client.name : 'Неизвестно';
+}
+
+function getServiceName(serviceId) {
+  const service = storage.services.find(s => s.id === serviceId);
+  return service ? service.name : 'Неизвестно';
+}
+
+function updateDashboard(){
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekAgo = new Date(today);
+  weekAgo.setDate(today.getDate() - 7);
+  const monthAgo = new Date(today);
+  monthAgo.setMonth(today.getMonth() - 1);
+
+  const completed = storage.appointments.filter(a => a.status === 'completed');
+
+  const revenueToday = completed.filter(a => new Date(a.dateTime).toDateString() === today.toDateString()).reduce((sum, a) => sum + (a.price || 0), 0);
+  const revenueWeek = completed.filter(a => new Date(a.dateTime) >= weekAgo).reduce((sum, a) => sum + (a.price || 0), 0);
+  const revenueMonth = completed.filter(a => new Date(a.dateTime) >= monthAgo).reduce((sum, a) => sum + (a.price || 0), 0);
+  
+  const completedToday = completed.filter(a => new Date(a.dateTime).toDateString() === today.toDateString()).length;
+  const activeWeek = storage.appointments.filter(a => new Date(a.dateTime) >= weekAgo && a.status !== 'cancelled').length;
+
+  $('#revenue-today').textContent = `${revenueToday} ₽`;
+  $('#revenue-week').textContent = `${revenueWeek} ₽`;
+  $('#revenue-month').textContent = `${revenueMonth} ₽`;
+  $('#completed-today').textContent = completedToday;
+  $('#active-week').textContent = activeWeek;
+  $('#total-appointments').textContent = storage.appointments.length;
+  $('#total-clients').textContent = storage.clients.length;
+  $('#total-cars').textContent = storage.cars.length;
+
+  renderRecentAppointments();
+}
+
+function renderCharts(){
+  const now = new Date();
+  const labels = [];
+  const data = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(now); d.setDate(now.getDate()-i);
+    const iso = d.toISOString().split('T')[0];
+    labels.push(d.toLocaleDateString('ru-RU',{day:'2-digit', month:'short'}));
+    data.push(storage.appointments.filter(a=> a.dateTime.startsWith(iso)).length);
+  }
+  const ctx1 = document.getElementById('chartDaily').getContext('2d');
+  if(chartDaily) chartDaily.destroy();
+  const grad = ctx1.createLinearGradient(0,0,0,300); grad.addColorStop(0,'rgba(124,58,237,0.9)'); grad.addColorStop(1,'rgba(6,182,212,0.12)');
+  chartDaily = new Chart(ctx1, {
+    type:'line',
+    data:{ labels, datasets:[{ label:'Записи', data, borderColor:'#7c3aed', backgroundColor:grad, fill:true, tension:0.38, pointRadius:4 }]},
+    options:{ responsive:true, plugins:{ legend:{display:false}, tooltip:{mode:'index'}}, scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 }}} }
+  });
+  const map = {};
+  storage.appointments.forEach(a=>{
+    const s = storage.services.find(x=>x.id===a.serviceId);
+    if(s) map[s.name] = (map[s.name]||0)+1;
+  });
+  const topLabels = Object.keys(map);
+  const topData = Object.values(map);
+  const ctx2 = document.getElementById('chartTop').getContext('2d');
+  if(chartTop) chartTop.destroy();
+  chartTop = new Chart(ctx2, {
+    type:'doughnut',
+    data:{ labels: topLabels, datasets:[{ data: topData, backgroundColor: ['#7c3aed','#06b6d4','#f59e0b','#ef4444','#10b981'] }]},
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
+  });
+}
+
+function fillSelects(){
+  const clientSelects = [$('#carClientIds'), $('#apptClient')];
+  clientSelects.forEach(sel => {
+    if(sel) {
+      sel.innerHTML = '<option value="">Выберите клиента</option><option value="new">+ Новый клиент</option>';
+      storage.clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+    }
+  });
+
+  const serviceSelect = $('#apptService');
+  if(serviceSelect) {
+    serviceSelect.innerHTML = '<option value="">Выберите услугу</option>';
+    storage.services.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `${s.name} (${s.price} ₽)`;
+      opt.dataset.price = s.price;
+      serviceSelect.appendChild(opt);
+    });
+  }
+
+  const empSelects = [$('#apptEmployee'), $('#shiftEmployeeId')];
+  empSelects.forEach(sel => {
+    if(sel) {
+      sel.innerHTML = '<option value="">—</option>';
+      storage.employees.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.textContent = e.name;
+        sel.appendChild(opt);
+      });
+    }
+  });
+
+  const carWashSelect = $('#washBayCarWashId');
+  if(carWashSelect) {
+    carWashSelect.innerHTML = '<option value="">Выберите мойку</option>';
+    storage.carWashes.forEach(cw => {
+      const opt = document.createElement('option');
+      opt.value = cw.id;
+      opt.textContent = cw.name;
+      carWashSelect.appendChild(opt);
+    });
+  }
+  const washBaySelect = $('#apptWashBay');
+  if(washBaySelect) {
+    washBaySelect.innerHTML = '<option value="">Не выбрано</option>';
+    storage.washBays.forEach(bay => {
+      const carWash = storage.carWashes.find(w => w.id === bay.carWashId);
+      const opt = document.createElement('option');
+      opt.value = bay.id;
+      opt.textContent = `${bay.name} (${carWash?.name || 'Неизвестно'})`;
+      washBaySelect.appendChild(opt);
+    });
+  }
+}
+
+function loadCarsForClient(){
+  const clientId = parseInt($('#apptClient').value) || null;
+  const carSelect = $('#apptCar'); 
+  if(!carSelect) return;
+  
+  carSelect.innerHTML = '<option value="">Выберите авто</option><option value="new">+ Новое авто</option>';
+  if(!clientId) return;
+  
+  const cars = storage.cars.filter(c => c.clientIds.includes(clientId));
+  if(cars.length === 0) {
+    const opt = document.createElement('option');
+    opt.textContent = "Нет авто";
+    opt.disabled = true;
+    carSelect.appendChild(opt);
+  } else {
+    cars.forEach(car => {
+      const opt = document.createElement('option');
+      opt.value = car.id;
+      opt.textContent = `${car.plate} — ${car.brand} ${car.model}`;
+      carSelect.appendChild(opt);
+    });
+  }
+}
+
+function updateAppointmentPrice(){
+  const serviceId = $('#apptService').value;
+  const service = storage.services.find(s => s.id == serviceId);
+  $('#apptPrice').value = service ? service.price : '';
+}
+
+function fillFilterSelects() {
+  const carWashSelect = $('#filterCarWash');
+  carWashSelect.innerHTML = '<option value="">Все мойки</option>';
+  storage.carWashes.forEach(wash => {
+    const option = document.createElement('option');
+    option.value = wash.id;
+    option.textContent = wash.name;
+    carWashSelect.appendChild(option);
+  });
+}
+
+// Обработчики событий для основного приложения
+$('#globalSearch').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  const suggWrap = $('#searchSuggestions'); suggWrap.innerHTML='';
+  if(!q){ suggWrap.style.display='none'; return; }
+  const results = [];
+  storage.clients.forEach(c=> { if(c.name.toLowerCase().includes(q)|| (c.phone||'').includes(q)) results.push({type:'client', text:c.name}); });
+  storage.cars.forEach(c=> { if((c.plate||'').toLowerCase().includes(q)) results.push({type:'car', text:c.plate+' — '+c.brand+' '+c.model}); });
+  storage.services.forEach(s=> { if(s.name.toLowerCase().includes(q)) results.push({type:'service', text:s.name}); });
+  if(results.length===0){ suggWrap.style.display='none'; return; }
+    suggWrap.style.display='block';
+  const list = document.createElement('div'); list.className='card'; list.style.padding='8px';
+  results.slice(0,6).forEach(r=>{
+    const it = document.createElement('div'); it.className='py-1 px-2'; it.style.cursor='pointer';
+    it.textContent = (r.type==='client'?'👤 ':'') + r.text;
+    it.addEventListener('click', ()=> { $('#globalSearch').value = r.text; suggWrap.innerHTML=''; suggWrap.style.display='none'; });
+    list.appendChild(it);
+  });
+  suggWrap.appendChild(list);
+});
+
+$('#saveClientBtn').addEventListener('click', saveClient);
+$('#saveCarBtn').addEventListener('click', saveCar);
+$('#saveServiceBtn').addEventListener('click', saveService);
+$('#saveEmployeeBtn').addEventListener('click', saveEmployee);
+$('#saveApptBtn').addEventListener('click', saveAppt);
+$('#saveShiftBtn').addEventListener('click', saveShift);
+$('#saveCarWashBtn').addEventListener('click', saveCarWash);
+$('#saveWashBayBtn').addEventListener('click', saveWashBay);
+
+$('#apptClient').addEventListener('change', loadCarsForClient);
+$('#apptService').addEventListener('change', updateAppointmentPrice);
+
+$('#apptCar').addEventListener('change', function() {
+  if (this.value === 'new') {
+    $('#newCarFields').style.display = 'block';
+  } else {
+    $('#newCarFields').style.display = 'none';
+  }
+});
+
+$('#apptClient').addEventListener('change', function() {
+  if (this.value === 'new') {
+    $('#apptCar').innerHTML = '<option value="">Выберите авто</option><option value="new">+ Новое авто</option>';
+    $('#newCarFields').style.display = 'none';
+  }
+});
+
+$('#apptDateTime').addEventListener('change', function() {
+  setTimeout(() => {
+    if (this.value && !$('#appointmentId').value) {
+      openWashBayModal();
+    }
+  }, 1000);
+});
+
+$('#openCreate').addEventListener('click', ()=> { 
+  resetAppointmentModal();
+  new bootstrap.Modal($('#appointmentModal')).show(); 
+});
+
+$('#exportCsvBtn').addEventListener('click', ()=>{
+  const headers = ['Дата','Клиент','Авто','Услуга','Сотрудник','Статус','Цена'];
+  const rows = storage.appointments.map(a=>{
+    const c = storage.clients.find(x=>x.id===a.clientId)||{};
+    const car = storage.cars.find(x=>x.id===a.carId)||{};
+    const srv = storage.services.find(x=>x.id===a.serviceId)||{};
+    const emp = storage.employees.find(x=>x.id===a.employeeId)||{};
+    return [new Date(a.dateTime).toLocaleString(), c.name||'', car.plate||'', srv.name||'', emp.name||'', a.status, a.price||0];
+  });
+  const csv = [headers, ...rows].map(r=> r.map(cell=>`"${String(cell||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'appointments.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Экспорт готов');
+});
+
+$('#clientModal').addEventListener('hidden.bs.modal', resetClientModal);
+$('#carModal').addEventListener('hidden.bs.modal', resetCarModal);
+$('#serviceModal').addEventListener('hidden.bs.modal', resetServiceModal);
+$('#employeeModal').addEventListener('hidden.bs.modal', resetEmployeeModal);
+$('#appointmentModal').addEventListener('hidden.bs.modal', resetAppointmentModal);
+$('#shiftModal').addEventListener('hidden.bs.modal', resetShiftModal);
+$('#carWashModal').addEventListener('hidden.bs.modal', resetCarWashModal);
+$('#washBayModal').addEventListener('hidden.bs.modal', resetWashBayModal);
+
+$('#appointmentModal').addEventListener('show.bs.modal', function() {
+  if (!$('#appointmentId').value) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    $('#apptDateTime').value = now.toISOString().slice(0, 16);
+  }
+});
+
+$('#shiftModal').addEventListener('show.bs.modal', function() {
+  if (!$('#shiftId').value) {
+    $('#shiftDate').value = new Date().toISOString().split('T')[0];
+  }
+});
+
+$('#notifBtn').addEventListener('click', function() {
+  const pendingAppointments = storage.appointments.filter(a => a.status === 'pending');
+  if (pendingAppointments.length > 0) {
+    showToast(`Ожидают обработки: ${pendingAppointments.length} записей`, 'success');
+  } else {
+    showToast('Нет ожидающих записей', 'success');
+  }
+  $('#notifPing').style.display = 'none';
+});
+
+setInterval(() => {
+  if ($('#dashboard').style.display !== 'none') {
+    updateDashboard();
+  }
+}, 60000);
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#searchBox')) {
+    $('#searchSuggestions').style.display = 'none';
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    $('#globalSearch').focus();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+    e.preventDefault();
+    resetAppointmentModal();
+    new bootstrap.Modal($('#appointmentModal')).show();
+  }
+});
+
+window.addEventListener('resize', function() {
+  if (window.innerWidth < 900) {
+    document.querySelector('.sidebar').style.width = '66px';
+    document.querySelector('.sidebar').style.minWidth = '66px';
+  }
+});
+
+// Экспортируем функции в window для использования в HTML
+window.editClient = editClient;
+window.deleteClient = deleteClient;
+window.editCar = editCar;
+window.deleteCar = deleteCar;
+window.editService = editService;
+window.deleteService = deleteService;
+window.editEmployee = editEmployee;
+window.deleteEmployee = deleteEmployee;
+window.editAppt = editAppt;
+window.deleteAppt = deleteAppt;
+window.editShift = editShift;
+window.deleteShift = deleteShift;
+window.editCarWash = editCarWash;
+window.deleteCarWash = deleteCarWash;
+window.editWashBay = editWashBay;
+window.deleteWashBay = deleteWashBay;
+window.loadCarsForClient = loadCarsForClient;
+window.updateAppointmentPrice = updateAppointmentPrice;
+window.openWashBayModal = openWashBayModal;
+window.selectWashBay = selectWashBay;
+window.applyFilters = applyFilters;
+window.quickChangeStatus = quickChangeStatus;
+window.saveQuickStatus = saveQuickStatus;
+</script>
+</body>
+</html>
